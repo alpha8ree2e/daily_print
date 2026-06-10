@@ -101,7 +101,6 @@
 
       .toolbar {
         display: grid;
-        grid-template-columns: 1fr 1fr;
         gap: 10px;
         margin-bottom: 20px;
       }
@@ -249,22 +248,6 @@
         font-size: 13px;
       }
 
-      .previewTools {
-        display: flex;
-        gap: 8px;
-      }
-
-      .previewBtn {
-        width: 42px;
-        height: 42px;
-        border-radius: 6px;
-        background: #fff;
-        border: 1px solid var(--line);
-        color: var(--ink);
-        font-size: 18px;
-        box-shadow: 0 6px 18px rgba(23, 32, 42, 0.06);
-      }
-
       .sheet {
         display: grid;
         gap: 18px;
@@ -287,12 +270,12 @@
         align-self: center;
         justify-self: stretch;
         text-align: center;
-        font-size: clamp(40px, 7.2vw, 74px);
+        font-size: clamp(36px, 6.6vw, 66px);
         line-height: 0.98;
         font-weight: 950;
         letter-spacing: 0;
         text-transform: uppercase;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
       }
 
       .labelDate {
@@ -304,8 +287,10 @@
       }
 
       .labelText.long {
-        font-size: clamp(31px, 5.8vw, 52px);
+        font-size: clamp(28px, 5.2vw, 46px);
         line-height: 1.03;
+        white-space: normal;
+        overflow-wrap: normal;
       }
 
       .empty {
@@ -381,11 +366,11 @@
         }
 
         .labelText {
-          font-size: 22mm;
+          font-size: 20mm;
         }
 
         .labelText.long {
-          font-size: 14.5mm;
+          font-size: 13mm;
         }
 
         .labelDate {
@@ -408,10 +393,6 @@
           <div class="field">
             <label for="printDate">Date</label>
             <input id="printDate" type="date" />
-          </div>
-          <div class="field">
-            <label for="defaultQty">Default Qty</label>
-            <input id="defaultQty" type="number" min="1" max="99" value="1" />
           </div>
         </div>
 
@@ -439,10 +420,6 @@
             <h2>Preview</h2>
             <p class="hint">Each label prints on its own page. Choose your label printer in the print dialog.</p>
           </div>
-          <div class="previewTools" aria-label="Preview actions">
-            <button class="previewBtn" id="minusAll" type="button" title="Decrease selected labels">-</button>
-            <button class="previewBtn" id="plusAll" type="button" title="Increase selected labels">+</button>
-          </div>
         </div>
         <div class="sheet" id="sheet"></div>
       </section>
@@ -468,7 +445,6 @@
       const labelList = document.querySelector("#labelList");
       const sheet = document.querySelector("#sheet");
       const printDate = document.querySelector("#printDate");
-      const defaultQty = document.querySelector("#defaultQty");
       const selectedCount = document.querySelector("#selectedCount");
       const pageCount = document.querySelector("#pageCount");
 
@@ -606,10 +582,8 @@
       }
 
       document.querySelector("#selectAll").addEventListener("click", () => {
-        const qty = cleanQty(defaultQty.value);
         state.forEach((item) => {
           item.selected = true;
-          item.qty = qty;
         });
         render();
       });
@@ -625,21 +599,6 @@
         state.forEach((item) => {
           item.qty = 1;
         });
-        defaultQty.value = 1;
-        render();
-      });
-
-      document.querySelector("#plusAll").addEventListener("click", () => {
-        state.forEach((item) => {
-          if (item.selected) item.qty = Math.min(99, item.qty + 1);
-        });
-        render();
-      });
-
-      document.querySelector("#minusAll").addEventListener("click", () => {
-        state.forEach((item) => {
-          if (item.selected) item.qty = Math.max(1, item.qty - 1);
-        });
         render();
       });
 
@@ -649,9 +608,6 @@
       });
 
       printDate.addEventListener("change", renderPreview);
-      defaultQty.addEventListener("change", () => {
-        defaultQty.value = cleanQty(defaultQty.value);
-      });
 
       printDate.value = todayValue();
       render();
