@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daily Label Print</title>
+    <style>
+      :root {
+        --bg: #f5f5f7;
+        --panel: #ffffff;
+        --ink: #14171a;
+        --muted: #5d6875;
+        --line: #d8dee6;
+        --soft: #f7f8fa;
+        --accent: #0f766e;
+        --accent-2: #b42318;
+        --shadow: 0 14px 40px rgba(23, 32, 42, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Arial,
+          "Helvetica Neue",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(15, 118, 110, 0.28);
+        outline-offset: 2px;
+      }
+
+      .app {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(430px, 540px) minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .controls {
+        height: 100vh;
+        padding: 22px 28px;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 23px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      .meta {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        padding: 6px 9px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        background: var(--soft);
+      }
+
+      .toolbar {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .field {
+        display: grid;
+        gap: 5px;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .field input {
+        width: 100%;
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 7px 10px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .btn {
+        min-height: 36px;
+        border-radius: 6px;
+        background: #e7ebf0;
+        color: var(--ink);
+        font-weight: 800;
+        font-size: 14px;
+      }
+
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .printAction {
+        margin-top: 10px;
+      }
+
+      .printAction .btn {
+        width: 100%;
+      }
+
+      .btn.warn {
+        color: var(--accent-2);
+      }
+
+      .summary {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .labelList {
+        display: grid;
+        gap: 6px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) 120px;
+        align-items: center;
+        gap: 10px;
+        min-height: 50px;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--soft);
+      }
+
+      .row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+      }
+
+      .name {
+        min-width: 0;
+        font-size: 14px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .qty {
+        display: grid;
+        grid-template-columns: 32px 44px 32px;
+        gap: 6px;
+        align-items: center;
+        justify-content: end;
+      }
+
+      .qty button {
+        width: 32px;
+        height: 32px;
+        border-radius: 5px;
+        background: #dde4ec;
+        color: var(--ink);
+        font-weight: 900;
+      }
+
+      .qty input {
+        min-width: 0;
+        width: 44px;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        text-align: center;
+        padding: 0 2px;
+      }
+
+      .previewWrap {
+        min-width: 0;
+        height: 100vh;
+        padding: 0 28px 28px;
+        overflow: auto;
+      }
+
+      .previewTop {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin: 0 auto 18px;
+        padding: 24px 0 14px;
+        max-width: 760px;
+        background: var(--bg);
+      }
+
+      .previewTop h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .hint {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .sheet {
+        display: grid;
+        gap: 18px;
+        justify-content: center;
+        padding-bottom: 28px;
+      }
+
+      .labelPage {
+        width: min(100%, 560px);
+        aspect-ratio: 150 / 100;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        padding: 28px 34px 24px;
+        background: #fff;
+        border: 1px solid #c7cdd5;
+        box-shadow: var(--shadow);
+        page-break-after: always;
+      }
+
+      .labelText {
+        align-self: center;
+        justify-self: stretch;
+        text-align: center;
+        font-size: clamp(36px, 6.6vw, 66px);
+        line-height: 0.98;
+        font-weight: 950;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .labelDate {
+        text-align: center;
+        font-size: clamp(24px, 5.2vw, 36px);
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .labelText.long {
+        font-size: clamp(28px, 5.2vw, 46px);
+        line-height: 1.03;
+        white-space: normal;
+        overflow-wrap: normal;
+      }
+
+      .labelText.stacked {
+        display: grid;
+        gap: 3px;
+        font-size: clamp(30px, 5.8vw, 56px);
+        line-height: 0.96;
+        white-space: normal;
+      }
+
+      .labelText.stacked .qualifier {
+        font-size: 0.78em;
+      }
+
+      .empty {
+        max-width: 760px;
+        min-height: 360px;
+        margin: auto;
+        display: grid;
+        place-items: center;
+        border: 1px dashed #b7c0ca;
+        border-radius: 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.58);
+        text-align: center;
+        padding: 24px;
+      }
+
+      @media (max-width: 880px) {
+        html,
+        body {
+          height: auto;
+        }
+
+        .app {
+          height: auto;
+          grid-template-columns: 1fr;
+          overflow: visible;
+        }
+
+        .controls {
+          min-height: auto;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          overflow: visible;
+        }
+
+        .previewWrap {
+          height: auto;
+          overflow: visible;
+          padding: 0 18px 24px;
+        }
+
+        .previewTop {
+          position: static;
+          padding-top: 18px;
+        }
+      }
+
+      @media (max-height: 720px) and (min-width: 881px) {
+        .controls {
+          padding: 16px 24px;
+        }
+
+        .header {
+          margin-bottom: 9px;
+        }
+
+        h1 {
+          font-size: 21px;
+        }
+
+        .toolbar {
+          margin-bottom: 9px;
+        }
+
+        .field input {
+          min-height: 32px;
+          padding-block: 5px;
+        }
+
+        .actions {
+          margin-bottom: 8px;
+        }
+
+        .btn {
+          min-height: 32px;
+        }
+
+        .row {
+          min-height: 44px;
+          padding: 5px 10px;
+        }
+
+        .qty button,
+        .qty input {
+          height: 28px;
+        }
+
+        .printAction {
+          margin-top: 8px;
+        }
+      }
+
+      @page {
+        size: 150mm 100mm;
+        margin: 0;
+      }
+
+      @media print {
+        html,
+        body {
+          width: 150mm;
+          margin: 0;
+          background: #fff;
+        }
+
+        .controls,
+        .previewTop,
+        .empty {
+          display: none !important;
+        }
+
+        .app,
+        .previewWrap,
+        .sheet {
+          display: block;
+          height: auto;
+          min-height: 0;
+          padding: 0;
+          margin: 0;
+          background: #fff;
+          overflow: visible;
+        }
+
+        .labelPage {
+          width: 150mm;
+          height: 100mm;
+          aspect-ratio: auto;
+          margin: 0;
+          padding: 10mm 12mm 8mm;
+          border: 0;
+          box-shadow: none;
+          break-after: page;
+          page-break-after: always;
+        }
+
+        .labelPage:last-child {
+          break-after: auto;
+          page-break-after: auto;
+        }
+
+        .labelText {
+          font-size: 20mm;
+        }
+
+        .labelText.long {
+          font-size: 13mm;
+        }
+
+        .labelText.stacked {
+          font-size: 15mm;
+        }
+
+        .labelDate {
+          font-size: 11mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="controls" aria-label="Label controls">
+        <div class="header">
+          <div>
+            <h1>Daily Label Print</h1>
+          </div>
+          <div class="badge">4 x 6</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="field">
+            <label for="printDate">Date</label>
+            <input id="printDate" type="date" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="selectAll" type="button">Select All</button>
+          <button class="btn" id="selectNone" type="button">Clear</button>
+          <button class="btn warn" id="resetQty" type="button">Reset</button>
+        </div>
+
+        <p class="summary">
+          <span id="selectedCount">0 selected</span>
+          <span id="pageCount">0 labels</span>
+        </p>
+
+        <div class="labelList" id="labelList"></div>
+
+        <div class="printAction">
+          <button class="btn primary" id="printPdf" type="button">Print</button>
+        </div>
+      </section>
+
+      <section class="previewWrap" aria-label="Print preview">
+        <div class="previewTop">
+          <div>
+            <h2>Preview</h2>
+            <p class="hint">Each label prints on its own page. Choose your label printer in the print dialog.</p>
+          </div>
+        </div>
+        <div class="sheet" id="sheet"></div>
+      </section>
+    </main>
+
+    <script>
+      const labelTypes = [
+        { name: "Re-delivery" },
+        { name: "Shelve" },
+        { name: "Duplicate" },
+        { name: "Damage" },
+        { name: "No Label" },
+        {
+          name: "Return to Customer (FL)",
+          lines: ["Return to", "Customer", "(FL)"],
+        },
+        {
+          name: "Return to Customer (Other States)",
+          lines: ["Return to", "Customer", "(Other States)"],
+        },
+        { name: "Abandoned Destory" },
+      ];
+
+      const state = labelTypes.map((label) => ({
+        ...label,
+        selected: true,
+        qty: 1,
+      }));
+
+      const labelList = document.querySelector("#labelList");
+      const sheet = document.querySelector("#sheet");
+      const printDate = document.querySelector("#printDate");
+      const selectedCount = document.querySelector("#selectedCount");
+      const pageCount = document.querySelector("#pageCount");
+
+      function todayValue() {
+        const now = new Date();
+        const offset = now.getTimezoneOffset();
+        return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+      }
+
+      function displayDate(value) {
+        const [year, month, day] = value.split("-");
+        return `${month}/${day}/${year}`;
+      }
+
+      function cleanQty(value) {
+        const qty = Number.parseInt(value, 10);
+        if (Number.isNaN(qty) || qty < 1) return 1;
+        if (qty > 99) return 99;
+        return qty;
+      }
+
+      function renderControls() {
+        labelList.innerHTML = "";
+
+        state.forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "row";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = item.selected;
+          checkbox.setAttribute("aria-label", `Select ${item.name}`);
+          checkbox.addEventListener("change", () => {
+            item.selected = checkbox.checked;
+            render();
+          });
+
+          const name = document.createElement("div");
+          name.className = "name";
+          name.textContent = item.name;
+
+          const qty = document.createElement("div");
+          qty.className = "qty";
+
+          const minus = document.createElement("button");
+          minus.type = "button";
+          minus.textContent = "-";
+          minus.title = "Decrease quantity";
+          minus.addEventListener("click", () => {
+            item.qty = Math.max(1, item.qty - 1);
+            render();
+          });
+
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "1";
+          input.max = "99";
+          input.value = item.qty;
+          input.setAttribute("aria-label", `${item.name} quantity`);
+          input.addEventListener("change", () => {
+            item.qty = cleanQty(input.value);
+            item.selected = true;
+            render();
+          });
+
+          const plus = document.createElement("button");
+          plus.type = "button";
+          plus.textContent = "+";
+          plus.title = "Increase quantity";
+          plus.addEventListener("click", () => {
+            item.qty = Math.min(99, item.qty + 1);
+            item.selected = true;
+            render();
+          });
+
+          qty.append(minus, input, plus);
+          row.append(checkbox, name, qty);
+          labelList.append(row);
+        });
+      }
+
+      function buildPages() {
+        const pages = [];
+        state.forEach((item) => {
+          if (!item.selected) return;
+          for (let i = 0; i < item.qty; i += 1) {
+            pages.push(item);
+          }
+        });
+        return pages;
+      }
+
+      function renderPreview() {
+        const pages = buildPages();
+        sheet.innerHTML = "";
+
+        if (!pages.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "Select at least one label.";
+          sheet.append(empty);
+          return;
+        }
+
+        const dateText = displayDate(printDate.value);
+        pages.forEach((item) => {
+          const page = document.createElement("article");
+          page.className = "labelPage";
+
+          const labelText = document.createElement("div");
+          labelText.className = "labelText";
+          if (item.lines) {
+            labelText.classList.add("stacked");
+            item.lines.forEach((line, index) => {
+              const span = document.createElement("span");
+              if (index === 2) span.className = "qualifier";
+              span.textContent = line;
+              labelText.append(span);
+            });
+          } else {
+            if (item.name.length > 16) labelText.classList.add("long");
+            labelText.textContent = item.name;
+          }
+
+          const labelDate = document.createElement("div");
+          labelDate.className = "labelDate";
+          labelDate.textContent = dateText;
+
+          page.append(labelText, labelDate);
+          sheet.append(page);
+        });
+      }
+
+      function renderSummary() {
+        const selected = state.filter((item) => item.selected).length;
+        const pages = buildPages().length;
+        selectedCount.textContent = `${selected} selected`;
+        pageCount.textContent = `${pages} labels`;
+      }
+
+      function render() {
+        renderControls();
+        renderPreview();
+        renderSummary();
+      }
+
+      document.querySelector("#selectAll").addEventListener("click", () => {
+        state.forEach((item) => {
+          item.selected = true;
+        });
+        render();
+      });
+
+      document.querySelector("#selectNone").addEventListener("click", () => {
+        state.forEach((item) => {
+          item.selected = false;
+        });
+        render();
+      });
+
+      document.querySelector("#resetQty").addEventListener("click", () => {
+        state.forEach((item) => {
+          item.qty = 1;
+        });
+        render();
+      });
+
+      document.querySelector("#printPdf").addEventListener("click", () => {
+        if (!buildPages().length) return;
+        window.print();
+      });
+
+      printDate.addEventListener("change", renderPreview);
+
+      printDate.value = todayValue();
+      render();
+    </script>
+  </body>
+</html>
